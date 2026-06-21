@@ -1,0 +1,82 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-omnicore}
+      POSTGRES_USER: ${POSTGRES_USER:-omnicore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-omnicore}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chroma:
+    image: chromadb/chroma:0.5.23
+    ports:
+      - "${CHROMA_PORT:-8001}:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      OMNICORE_ENV: "${OMNICORE_ENV:-development}"
+      OMNICORE_DEBUG: "${OMNICORE_DEBUG:-false}"
+      OMNICORE_DATABASE_URL: "${OMNICORE_DATABASE_URL:-postgresql+asyncpg://omnicore:omnicore@postgres:5432/omnicore}"
+      OMNICORE_JWT_SECRET_KEY: "${OMNICORE_JWT_SECRET_KEY:-change-this-before-sharing-or-deploying}"
+      OMNICORE_CORS_ORIGINS: '${OMNICORE_CORS_ORIGINS:-["http://localhost:3000"]}'
+      OMNICORE_CHROMA_ENDPOINT_URL: "${OMNICORE_CHROMA_ENDPOINT_URL:-http://chroma:8000}"
+      OMNICORE_CHROMA_COLLECTION_NAME: "${OMNICORE_CHROMA_COLLECTION_NAME:-omnicore_knowledge}"
+      OMNICORE_PHI3_ENDPOINT_URL: "${OMNICORE_PHI3_ENDPOINT_URL:-}"
+      OMNICORE_ENABLE_AI: "${OMNICORE_ENABLE_AI:-true}"
+      OMNICORE_ENABLE_FORECASTING: "${OMNICORE_ENABLE_FORECASTING:-true}"
+      OMNICORE_RUN_MIGRATIONS: "${OMNICORE_RUN_MIGRATIONS:-true}"
+      OMNICORE_SEED_DATABASE: "${OMNICORE_SEED_DATABASE:-true}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/readiness', timeout=3)\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  frontend:
+    build:
+      context: .
+    environment:
+      OMNICORE_API_BASE_URL: "${OMNICORE_API_BASE_URL:-http://backend:8000/api/v1}"
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  postgres_data:
+  chroma_data:

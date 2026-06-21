@@ -1,0 +1,9 @@
+.git
+.next
+node_modules
+coverage
+*.tsbuildinfo
+.env*
+backend/.venv
+backend/__pycache__
+backend/.pytest_cache
