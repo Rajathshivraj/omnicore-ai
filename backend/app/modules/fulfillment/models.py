@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -12,8 +13,6 @@ from app.db.enums import FulfillmentStatus, enum_type
 from app.db.mixins import AuditMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from uuid import UUID
-
     from app.modules.orders.models import Order
 
 
@@ -41,4 +40,4 @@ class FulfillmentRecord(UUIDPrimaryKeyMixin, AuditMixin, Base):
     exception_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    order: Mapped[Order] = relationship(back_populates="fulfillment_records")
+    order: Mapped["Order"] = relationship("Order", back_populates="fulfillment_records")

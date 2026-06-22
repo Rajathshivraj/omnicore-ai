@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -13,8 +14,6 @@ from app.db.enums import ForecastStatus, enum_type
 from app.db.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from uuid import UUID
-
     from app.modules.copilot.models import AIInsight
     from app.modules.products.models import Product
     from app.modules.users.models import User
@@ -71,9 +70,9 @@ class Forecast(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, Base):
         nullable=True,
     )
 
-    product: Mapped[Product] = relationship(back_populates="forecasts")
-    reviewer: Mapped[User | None] = relationship(
+    product: Mapped["Product"] = relationship(back_populates="forecasts")
+    reviewer: Mapped["User | None"] = relationship(
         back_populates="reviewed_forecasts",
         foreign_keys=[reviewed_by_id],
     )
-    ai_insights: Mapped[list[AIInsight]] = relationship(back_populates="forecast")
+    ai_insights: Mapped[list["AIInsight"]] = relationship(back_populates="forecast")

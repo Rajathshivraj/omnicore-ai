@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
 from sqlalchemy import CheckConstraint, ForeignKey, Index, Numeric, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
@@ -12,8 +13,6 @@ from app.db.enums import ProductStatus, enum_type
 from app.db.mixins import AuditMixin, SoftDeleteMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from uuid import UUID
-
     from app.modules.copilot.models import AIInsight
     from app.modules.forecasting.models import Forecast
     from app.modules.inventory.models import Inventory
@@ -46,12 +45,13 @@ class Category(UUIDPrimaryKeyMixin, AuditMixin, SoftDeleteMixin, Base):
         default=ProductStatus.ACTIVE,
     )
 
-    parent: Mapped[Category | None] = relationship(
+    parent: Mapped["Category | None"] = relationship(
+        "Category",
         remote_side="Category.id",
         back_populates="children",
     )
-    children: Mapped[list[Category]] = relationship(back_populates="parent")
-    products: Mapped[list[Product]] = relationship(back_populates="category")
+    children: Mapped[list["Category"]] = relationship("Category", back_populates="parent")
+    products: Mapped[list["Product"]] = relationship("Product", back_populates="category")
 
 
 class Product(UUIDPrimaryKeyMixin, AuditMixin, SoftDeleteMixin, Base):
@@ -85,8 +85,8 @@ class Product(UUIDPrimaryKeyMixin, AuditMixin, SoftDeleteMixin, Base):
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     attributes: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
 
-    category: Mapped[Category] = relationship(back_populates="products")
-    inventory_records: Mapped[list[Inventory]] = relationship(back_populates="product")
-    order_items: Mapped[list[OrderItem]] = relationship(back_populates="product")
-    forecasts: Mapped[list[Forecast]] = relationship(back_populates="product")
-    ai_insights: Mapped[list[AIInsight]] = relationship(back_populates="product")
+    category: Mapped["Category"] = relationship("Category", back_populates="products")
+    inventory_records: Mapped[list["Inventory"]] = relationship("Inventory", back_populates="product")
+    order_items: Mapped[list["OrderItem"]] = relationship("OrderItem", back_populates="product")
+    forecasts: Mapped[list["Forecast"]] = relationship("Forecast", back_populates="product")
+    ai_insights: Mapped[list["AIInsight"]] = relationship("AIInsight", back_populates="product")

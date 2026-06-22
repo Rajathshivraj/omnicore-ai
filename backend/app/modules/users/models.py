@@ -31,7 +31,8 @@ class Role(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, Base):
     permissions: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     is_system: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    users: Mapped[list[User]] = relationship(
+    users: Mapped[list["User"]] = relationship(
+        "User",
         back_populates="role",
         foreign_keys="User.role_id",
     )
@@ -61,16 +62,19 @@ class User(UUIDPrimaryKeyMixin, AuditMixin, SoftDeleteMixin, Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     profile_metadata: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
 
-    role: Mapped[Role] = relationship(back_populates="users", foreign_keys=[role_id])
-    orders: Mapped[list[Order]] = relationship(
+    role: Mapped["Role"] = relationship("Role", back_populates="users", foreign_keys=[role_id])
+    orders: Mapped[list["Order"]] = relationship(
+        "Order",
         back_populates="customer",
         foreign_keys="Order.customer_id",
     )
-    reviewed_forecasts: Mapped[list[Forecast]] = relationship(
+    reviewed_forecasts: Mapped[list["Forecast"]] = relationship(
+        "Forecast",
         back_populates="reviewer",
         foreign_keys="Forecast.reviewed_by_id",
     )
-    reviewed_ai_insights: Mapped[list[AIInsight]] = relationship(
+    reviewed_ai_insights: Mapped[list["AIInsight"]] = relationship(
+        "AIInsight",
         back_populates="reviewer",
         foreign_keys="AIInsight.reviewed_by_id",
     )

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
@@ -13,8 +14,6 @@ from app.db.enums import FulfillmentStatus, OrderStatus, PaymentStatus, enum_typ
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from uuid import UUID
-
     from app.modules.copilot.models import AIInsight
     from app.modules.fulfillment.models import FulfillmentRecord
     from app.modules.products.models import Product
@@ -72,10 +71,10 @@ class Order(UUIDPrimaryKeyMixin, AuditMixin, SoftDeleteMixin, Base):
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancellation_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    customer: Mapped[User] = relationship(back_populates="orders", foreign_keys=[customer_id])
-    items: Mapped[list[OrderItem]] = relationship(back_populates="order", cascade="all, delete-orphan")
-    ai_insights: Mapped[list[AIInsight]] = relationship(back_populates="order")
-    fulfillment_records: Mapped[list[FulfillmentRecord]] = relationship(
+    customer: Mapped["User"] = relationship(back_populates="orders", foreign_keys=[customer_id])
+    items: Mapped[list["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")
+    ai_insights: Mapped[list["AIInsight"]] = relationship(back_populates="order")
+    fulfillment_records: Mapped[list["FulfillmentRecord"]] = relationship(
         back_populates="order",
         cascade="all, delete-orphan",
     )
@@ -107,5 +106,5 @@ class OrderItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     unit_price_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     line_total_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
 
-    order: Mapped[Order] = relationship(back_populates="items")
-    product: Mapped[Product] = relationship(back_populates="order_items")
+    order: Mapped["Order"] = relationship(back_populates="items")
+    product: Mapped["Product"] = relationship(back_populates="order_items")

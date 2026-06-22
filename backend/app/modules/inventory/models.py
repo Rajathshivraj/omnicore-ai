@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -12,8 +13,6 @@ from app.db.enums import InventoryStatus, enum_type
 from app.db.mixins import AuditMixin, SoftDeleteMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from uuid import UUID
-
     from app.modules.products.models import Product
 
 
@@ -53,8 +52,8 @@ class Inventory(UUIDPrimaryKeyMixin, AuditMixin, SoftDeleteMixin, Base):
     )
     last_counted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    product: Mapped[Product] = relationship(back_populates="inventory_records")
-    movements: Mapped[list[InventoryMovement]] = relationship(back_populates="inventory")
+    product: Mapped["Product"] = relationship("Product", back_populates="inventory_records")
+    movements: Mapped[list["InventoryMovement"]] = relationship("InventoryMovement", back_populates="inventory")
 
 
 class InventoryMovement(UUIDPrimaryKeyMixin, AuditMixin, Base):
@@ -81,4 +80,4 @@ class InventoryMovement(UUIDPrimaryKeyMixin, AuditMixin, Base):
     quantity_delta: Mapped[int] = mapped_column(nullable=False)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    inventory: Mapped[Inventory] = relationship(back_populates="movements")
+    inventory: Mapped["Inventory"] = relationship("Inventory", back_populates="movements")

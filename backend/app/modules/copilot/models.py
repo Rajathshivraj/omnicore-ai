@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
@@ -13,8 +14,6 @@ from app.db.enums import AIInsightType, ReviewStatus, enum_type
 from app.db.mixins import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from uuid import UUID
-
     from app.modules.forecasting.models import Forecast
     from app.modules.orders.models import Order
     from app.modules.products.models import Product
@@ -77,10 +76,11 @@ class AIInsight(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, Base):
         nullable=True,
     )
 
-    product: Mapped[Product | None] = relationship(back_populates="ai_insights")
-    order: Mapped[Order | None] = relationship(back_populates="ai_insights")
-    forecast: Mapped[Forecast | None] = relationship(back_populates="ai_insights")
-    reviewer: Mapped[User | None] = relationship(
+    product: Mapped["Product | None"] = relationship("Product", back_populates="ai_insights")
+    order: Mapped["Order | None"] = relationship("Order", back_populates="ai_insights")
+    forecast: Mapped["Forecast | None"] = relationship("Forecast", back_populates="ai_insights")
+    reviewer: Mapped["User | None"] = relationship(
+        "User",
         back_populates="reviewed_ai_insights",
         foreign_keys=[reviewed_by_id],
     )
